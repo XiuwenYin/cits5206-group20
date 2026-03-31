@@ -1,21 +1,16 @@
-"""backend URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+backend/urls.py
+Main URL configuration for the Ground Support Testing Data System.
+Routes API requests to the appropriate app-level URL configurations.
+"""
+
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
+    # Django built-in admin interface
     path('admin/', admin.site.urls),
+
+    # Authentication endpoints: /api/auth/token/, /api/auth/check/ etc.
+    path('api/auth/', include('accounts.urls')),
 ]
