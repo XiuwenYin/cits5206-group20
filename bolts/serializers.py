@@ -39,3 +39,24 @@ class BoltSerializer(serializers.ModelSerializer):
             'category',
             'equipment'
         ]
+
+
+class StatisticsSerializer(serializers.Serializer):
+    """
+    Serializer for test curve data statistics.
+    Computes and returns summary statistics for load and displacement data.
+    """
+    test_id = serializers.IntegerField()
+    data_points_count = serializers.IntegerField()
+    
+    # Load (kN) statistics
+    load_statistics = serializers.DictField(
+        child=serializers.FloatField(),
+        help_text="Statistics for load values in kN"
+    )
+    
+    # Displacement (mm) statistics
+    displacement_statistics = serializers.DictField(
+        child=serializers.FloatField(),
+        help_text="Statistics for displacement values in mm"
+    )
