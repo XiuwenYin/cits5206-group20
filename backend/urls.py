@@ -13,4 +13,7 @@ urlpatterns = [
 
     # Authentication endpoints: /api/auth/token/, /api/auth/check/ etc.
     path('api/auth/', include('accounts.urls')),
+
+    # Bolt products API endpoints: /api/bolts/products/
+    path('api/bolts/', include('bolts.urls')),
 ]
