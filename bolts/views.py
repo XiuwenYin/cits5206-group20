@@ -10,7 +10,7 @@ from rest_framework import status
 from django.db.models import Q
 import numpy as np
 from .models import Bolt, Test, CurveData
-from .serializers import BoltSerializer, StatisticsSerializer
+from .serializers import BoltSerializer, StatisticsSerializer, CurveDataListSerializer
 
 
 @api_view(['GET'])
@@ -179,4 +179,61 @@ def test_statistics(request, test_id):
     
     # Validate using serializer
     serializer = StatisticsSerializer(response_data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def test_curve_data(request, test_id):
+    """
+    GET /api/tests/<test_id>/curve-data/
+    
+    Returns the raw displacement/load curve data for a test as arrays.
+    
+    Parameters:
+    - test_id: The ID of the test
+    
+    Returns:
+    {
+        "test_id": <int>,
+        "data_points_count": <int>,
+        "displacement_mm": [<float>, ...],
+        "load_kn": [<float>, ...],
+        "energy_absorbed_kj": [<float|null>, ...]
+    }
+    
+    The returned arrays are ordered by displacement values (ascending).
+    All arrays have the same length as data_points_count.
+    """
+    try:
+        test = Test.objects.get(id=test_id)
+    except Test.DoesNotExist:
+        return Response(
+            {'error': f'Test with ID {test_id} not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Get all curve data for the test, ordered by displacement
+    curve_data = CurveData.objects.filter(test=test).order_by('displacement_mm')
+    
+    if not curve_data.exists():
+        return Response(
+            {'error': f'No curve data found for test ID {test_id}.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Extract data into arrays
+    displacement_array = [data.displacement_mm for data in curve_data]
+    load_array = [data.load_kn for data in curve_data]
+    energy_array = [data.energy_absorbed_kj for data in curve_data]
+    
+    response_data = {
+        'test_id': test.id,
+        'data_points_count': len(curve_data),
+        'displacement_mm': displacement_array,
+        'load_kn': load_array,
+        'energy_absorbed_kj': energy_array,
+    }
+    
+    # Validate using serializer
+    serializer = CurveDataListSerializer(response_data)
     return Response(serializer.data, status=status.HTTP_200_OK)
