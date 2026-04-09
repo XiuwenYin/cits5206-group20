@@ -5,7 +5,7 @@ Converts model instances to/from JSON for API responses.
 """
 
 from rest_framework import serializers
-from .models import Bolt, BoltCategory, EquipmentType
+from .models import Bolt, BoltCategory, EquipmentType, CurveData
 
 
 class EquipmentTypeSerializer(serializers.ModelSerializer):
@@ -59,4 +59,36 @@ class StatisticsSerializer(serializers.Serializer):
     displacement_statistics = serializers.DictField(
         child=serializers.FloatField(),
         help_text="Statistics for displacement values in mm"
+    )
+
+
+class CurveDataSerializer(serializers.ModelSerializer):
+    """
+    Serializer for CurveData model.
+    Returns individual displacement/load data points for a test.
+    """
+    class Meta:
+        model = CurveData
+        fields = ['id', 'displacement_mm', 'load_kn', 'energy_absorbed_kj']
+
+
+class CurveDataListSerializer(serializers.Serializer):
+    """
+    Serializer for returning curve data as arrays for a test.
+    Returns displacement and load arrays along with test metadata.
+    """
+    test_id = serializers.IntegerField()
+    data_points_count = serializers.IntegerField()
+    displacement_mm = serializers.ListField(
+        child=serializers.FloatField(),
+        help_text="Array of displacement values in millimeters"
+    )
+    load_kn = serializers.ListField(
+        child=serializers.FloatField(),
+        help_text="Array of load values in kilonewtons"
+    )
+    energy_absorbed_kj = serializers.ListField(
+        child=serializers.FloatField(),
+        allow_null=True,
+        help_text="Array of energy absorbed values in kilojoules (may be null)"
     )
