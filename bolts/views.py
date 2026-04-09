@@ -8,8 +8,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
-from .models import Bolt
-from .serializers import BoltSerializer
+import numpy as np
+from .models import Bolt, Test, CurveData
+from .serializers import BoltSerializer, StatisticsSerializer
 
 
 @api_view(['GET'])
@@ -78,3 +79,104 @@ def bolt_list_filter(request):
         'count': queryset.count(),
         'results': serializer.data
     })
+
+
+def _compute_percentile(data, percentile):
+    """
+    Helper function to compute percentile values using numpy.
+    
+    Args:
+        data: List or array of numerical values
+        percentile: Percentile value (0-100)
+    
+    Returns:
+        Float value of the computed percentile
+    """
+    return float(np.percentile(data, percentile))
+
+
+@api_view(['GET'])
+def test_statistics(request, test_id):
+    """
+    GET /api/tests/<test_id>/statistics/
+    
+    Returns summary statistics for a test's curve data.
+    Computes mean, median, min, max, 25th percentile, and 75th percentile
+    for both load (kN) and displacement (mm) values.
+    
+    Parameters:
+    - test_id: The ID of the test
+    
+    Returns:
+    {
+        "test_id": <int>,
+        "data_points_count": <int>,
+        "load_statistics": {
+            "mean": <float>,
+            "median": <float>,
+            "min": <float>,
+            "max": <float>,
+            "percentile_25": <float>,
+            "percentile_75": <float>
+        },
+        "displacement_statistics": {
+            "mean": <float>,
+            "median": <float>,
+            "min": <float>,
+            "max": <float>,
+            "percentile_25": <float>,
+            "percentile_75": <float>
+        }
+    }
+    """
+    try:
+        test = Test.objects.get(id=test_id)
+    except Test.DoesNotExist:
+        return Response(
+            {'error': f'Test with ID {test_id} not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Get all curve data for the test
+    curve_data = CurveData.objects.filter(test=test).order_by('displacement_mm')
+    
+    if not curve_data.exists():
+        return Response(
+            {'error': f'No curve data found for test ID {test_id}.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Extract load and displacement values
+    load_values = np.array([data.load_kn for data in curve_data])
+    displacement_values = np.array([data.displacement_mm for data in curve_data])
+    
+    # Compute statistics for load (kN)
+    load_stats = {
+        'mean': float(np.mean(load_values)),
+        'median': float(np.median(load_values)),
+        'min': float(np.min(load_values)),
+        'max': float(np.max(load_values)),
+        'percentile_25': _compute_percentile(load_values, 25),
+        'percentile_75': _compute_percentile(load_values, 75),
+    }
+    
+    # Compute statistics for displacement (mm)
+    displacement_stats = {
+        'mean': float(np.mean(displacement_values)),
+        'median': float(np.median(displacement_values)),
+        'min': float(np.min(displacement_values)),
+        'max': float(np.max(displacement_values)),
+        'percentile_25': _compute_percentile(displacement_values, 25),
+        'percentile_75': _compute_percentile(displacement_values, 75),
+    }
+    
+    response_data = {
+        'test_id': test.id,
+        'data_points_count': len(curve_data),
+        'load_statistics': load_stats,
+        'displacement_statistics': displacement_stats,
+    }
+    
+    # Validate using serializer
+    serializer = StatisticsSerializer(response_data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
