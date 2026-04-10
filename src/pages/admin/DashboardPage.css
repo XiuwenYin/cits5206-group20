@@ -1,0 +1,30 @@
+.dp-root {}
+
+.dp-header { margin-bottom: 2rem; }
+.dp-header h1 { font-size: 1.6rem; font-weight: 600; color: #ddeefa; margin-bottom: 0.3rem; }
+.dp-header p  { color: #4a7d96; font-size: 0.88rem; }
+.dp-header strong { color: #1B98E0; }
+
+.dp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1rem; margin-bottom: 2rem;
+}
+
+.dp-card {
+  background: rgba(8,18,32,0.8);
+  border: 1px solid rgba(27,152,224,0.14);
+  border-radius: 12px; padding: 1.25rem 1.4rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.dp-card-label {
+  font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.07em; color: #3d6a80; font-weight: 600;
+}
+.dp-card-value { font-size: 2rem; font-weight: 600; color: #1B98E0; }
+
+.dp-note {
+  font-size: 0.83rem; color: #2e5468;
+  border-left: 2px solid rgba(27,152,224,0.25);
+  padding-left: 1rem;
+}
