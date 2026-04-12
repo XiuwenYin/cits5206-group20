@@ -6,7 +6,11 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("admin_token"));
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem("admin_user");
-    return stored ? JSON.parse(stored) : null;
+    try {
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
   });
 
   const login = useCallback((token, userData) => {

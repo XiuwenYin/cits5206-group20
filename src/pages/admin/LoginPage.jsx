@@ -92,7 +92,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="lp-hint">Demo credentials: <code>admin</code> / <code>admin123</code></p>
       </div>
     </div>
   );
