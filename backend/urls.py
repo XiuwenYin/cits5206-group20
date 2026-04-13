@@ -18,3 +18,7 @@ urlpatterns = [
     path('api/bolts/', include('bolts.urls')),
 
 ]
+
+urlpatterns = [
+    path("api/", include("uploads.urls")),
+]
