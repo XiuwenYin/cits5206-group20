@@ -17,8 +17,7 @@ urlpatterns = [
     # Bolt products API endpoints: /api/bolts/products/
     path('api/bolts/', include('bolts.urls')),
 
-]
-
-urlpatterns = [
+    # File upload endpoint: /api/upload/
     path("api/", include("uploads.urls")),
+
 ]
