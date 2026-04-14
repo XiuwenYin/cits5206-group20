@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { apiLogin } from "../../api/auth";
 import "./LoginPage.css";
@@ -16,8 +16,7 @@ export default function LoginPage() {
   const [loading, setLoading]   = useState(false);
 
   if (isAuthenticated) {
-    navigate(from, { replace: true });
-    return null;
+    return <Navigate to={from} replace />;
   }
 
   async function handleSubmit(e) {
@@ -92,7 +91,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="lp-hint">Demo credentials: <code>admin</code> / <code>admin123</code></p>
       </div>
     </div>
   );

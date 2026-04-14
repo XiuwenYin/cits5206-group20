@@ -55,10 +55,12 @@ def bolt_list_filter(request):
     # Filter by category (by ID or name)
     category = request.query_params.get('category', None)
     if category:
-        # Try to filter by category ID first, then by name
-        queryset = queryset.filter(
-            Q(category__id=category) | Q(category__categoryName__icontains=category)
-        )
+        q = Q(category__categoryName__icontains=category)
+        try:
+            q |= Q(category__id=int(category))
+        except ValueError:
+            pass
+        queryset = queryset.filter(q)
     
     # Filter by test methodology (static or dynamic)
     methodology = request.query_params.get('methodology', None)
