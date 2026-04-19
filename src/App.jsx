@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage     from "./pages/admin/LoginPage";
 import AdminLayout   from "./pages/admin/AdminLayout";
 import DashboardPage from "./pages/admin/DashboardPage";
+import ReviewPage from "./pages/admin/ReviewPage";
 
 // Placeholders — replace when #8 and #9 are done
 function UploadPage() {
@@ -15,14 +16,8 @@ function UploadPage() {
     </div>
   );
 }
-function ReviewPage() {
-  return (
-    <div>
-      <h2 style={{ color: "#ddeefa", fontSize: "1.5rem", fontWeight: 600 }}>Review &amp; Approve</h2>
-      <p style={{ color: "#3d6a80", marginTop: "0.5rem" }}>Coming in Issue #9</p>
-    </div>
-  );
-}
+
+
 
 export default function App() {
   return (
