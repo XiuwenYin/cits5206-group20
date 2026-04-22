@@ -28,3 +28,10 @@
   border-left: 2px solid rgba(27,152,224,0.25);
   padding-left: 1rem;
 }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .dp-cards {
+    grid-template-columns: 1fr;
+  }
+}

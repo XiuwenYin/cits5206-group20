@@ -74,3 +74,34 @@
 
 /* ── Main ── */
 .al-main { flex: 1; padding: 2rem; overflow-y: auto; }
+
+
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .al-root { flex-direction: column; }
+
+  .al-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    padding: 0.75rem 1rem;
+    border-right: none;
+    border-bottom: 1px solid rgba(27,152,224,0.11);
+  }
+
+  .al-top { flex-direction: row; align-items: center; gap: 1rem; flex: 1; }
+  .al-brand { flex-shrink: 0; }
+  .al-brand-name { display: none; }
+
+  .al-nav { flex-direction: row; gap: 0.1rem; }
+  .al-link { padding: 0.45rem 0.6rem; font-size: 0; }
+  .al-icon { margin: 0; }
+
+  .al-bottom { border-top: none; padding-top: 0; }
+  .al-user-info { display: none; }
+  .al-role { display: none; }
+
+  .al-main { padding: 1.25rem; }
+}
