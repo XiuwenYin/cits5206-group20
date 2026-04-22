@@ -1,0 +1,143 @@
+.rp-root {}
+
+.rp-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.rp-header h1 { font-size: 1.6rem; font-weight: 600; color: #ddeefa; margin-bottom: 0.3rem; }
+.rp-header p  { color: #4a7d96; font-size: 0.88rem; }
+
+.rp-badge {
+  background: rgba(27,152,224,0.12);
+  border: 1px solid rgba(27,152,224,0.25);
+  border-radius: 20px; padding: 0.35rem 0.9rem;
+  font-size: 0.8rem; font-weight: 600; color: #1B98E0;
+  white-space: nowrap;
+}
+
+/* Notification */
+.rp-notification {
+  display: flex; align-items: center; gap: 0.5rem;
+  border-radius: 8px; padding: 0.6rem 0.85rem;
+  font-size: 0.83rem; margin-bottom: 1.2rem;
+  animation: fade-in 0.2s ease;
+}
+.rp-notification.success {
+  background: rgba(72,187,120,0.08);
+  border: 1px solid rgba(72,187,120,0.25);
+  color: #68d391;
+}
+.rp-notification.error {
+  background: rgba(229,62,62,0.09);
+  border: 1px solid rgba(229,62,62,0.28);
+  color: #fc8181;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Loading */
+.rp-loading {
+  display: flex; align-items: center; gap: 0.8rem;
+  color: #3d6a80; font-size: 0.88rem; padding: 2rem 0;
+}
+
+/* Empty */
+.rp-empty {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0.5rem;
+  padding: 4rem 2rem; text-align: center;
+}
+.rp-empty p { font-size: 1rem; font-weight: 500; color: #4a7d96; margin: 0; }
+.rp-empty span { font-size: 0.83rem; color: #2e5468; }
+
+/* List */
+.rp-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.rp-card {
+  display: flex; align-items: center; gap: 1rem;
+  background: rgba(8,18,32,0.7);
+  border: 1px solid rgba(27,152,224,0.12);
+  border-radius: 12px; padding: 1.1rem 1.3rem;
+  transition: border-color 0.14s;
+}
+.rp-card:hover { border-color: rgba(27,152,224,0.25); }
+
+.rp-card-icon {
+  width: 44px; height: 44px; border-radius: 9px;
+  background: rgba(27,152,224,0.1);
+  border: 1px solid rgba(27,152,224,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.68rem; font-weight: 700; color: #1B98E0;
+  letter-spacing: 0.05em; flex-shrink: 0;
+}
+
+.rp-card-info { flex: 1; min-width: 0; }
+.rp-card-name {
+  font-size: 0.9rem; font-weight: 500; color: #c4dff0;
+  display: block; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 0.25rem;
+}
+.rp-card-meta {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.75rem; color: #3d6a80;
+}
+.rp-dot { color: #2e5468; }
+
+.rp-card-status { flex-shrink: 0; }
+.rp-pending-badge {
+  background: rgba(237,137,54,0.1);
+  border: 1px solid rgba(237,137,54,0.25);
+  border-radius: 20px; padding: 0.25rem 0.7rem;
+  font-size: 0.72rem; font-weight: 600; color: #f6ad55;
+}
+
+/* Actions */
+.rp-card-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+.rp-reject-btn, .rp-approve-btn {
+  padding: 0.45rem 1rem; border-radius: 7px;
+  font-size: 0.83rem; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  min-width: 72px; min-height: 34px;
+  transition: background 0.14s, box-shadow 0.14s;
+}
+.rp-reject-btn:disabled, .rp-approve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.rp-reject-btn {
+  background: none;
+  border: 1px solid rgba(229,62,62,0.3);
+  color: #fc8181;
+}
+.rp-reject-btn:hover:not(:disabled) { background: rgba(229,62,62,0.1); }
+
+.rp-approve-btn {
+  background: #0F4C75;
+  border: 1px solid rgba(27,152,224,0.4);
+  color: #ddeefa;
+}
+.rp-approve-btn:hover:not(:disabled) {
+  background: #1B98E0;
+  box-shadow: 0 0 16px rgba(27,152,224,0.3);
+}
+
+/* Spinners */
+.rp-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(27,152,224,0.2);
+  border-top-color: #1B98E0;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+.rp-spinner-sm {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

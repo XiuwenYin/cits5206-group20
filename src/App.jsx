@@ -6,15 +6,7 @@ import LoginPage     from "./pages/admin/LoginPage";
 import AdminLayout   from "./pages/admin/AdminLayout";
 import DashboardPage from "./pages/admin/DashboardPage";
 import UploadPage from "./pages/admin/UploadPage";
-
-function ReviewPage() {
-  return (
-    <div>
-      <h2 style={{ color: "#ddeefa", fontSize: "1.5rem", fontWeight: 600 }}>Review &amp; Approve</h2>
-      <p style={{ color: "#3d6a80", marginTop: "0.5rem" }}>Coming in Issue #9</p>
-    </div>
-  );
-}
+import ReviewPage from "./pages/admin/ReviewPage";
 
 export default function App() {
   return (
@@ -23,7 +15,6 @@ export default function App() {
         <Routes>
           {/* Public */}
           <Route path="/admin/login" element={<LoginPage />} />
-
           {/* Protected */}
           <Route
             path="/admin"
@@ -38,7 +29,6 @@ export default function App() {
             <Route path="upload"    element={<UploadPage />} />
             <Route path="review"    element={<ReviewPage />} />
           </Route>
-
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/admin/login" replace />} />
         </Routes>
