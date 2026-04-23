@@ -5,6 +5,12 @@ import "./UploadPage.css";
 
 const ACCEPTED = [".json", ".csv"];
 
+const DATA_TYPES = [
+  { value: "bolts", label: "Bolt Products" },
+  { value: "tests", label: "Test Data" },
+  { value: "curve_data", label: "Curve Data" },
+];
+
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -20,6 +26,7 @@ export default function UploadPage() {
   const [status, setStatus] = useState(null); // null | "uploading" | "success" | "error"
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [dataType, setDataType] = useState(null);
 
   function handleFile(f) {
     const ext = "." + f.name.split(".").pop().toLowerCase();
@@ -46,7 +53,7 @@ export default function UploadPage() {
     setStatus("uploading");
     setError("");
     try {
-      const res = await apiUploadFile(file, token);
+      const res = await apiUploadFile(file, token, dataType);
       setResult(res);
       setStatus("success");
     } catch (err) {
@@ -68,7 +75,21 @@ export default function UploadPage() {
         <h1>Upload Data</h1>
         <p>Upload rock bolt testing data in JSON or CSV format for admin review.</p>
       </div>
-
+    {/* Data Type Selection */}
+    <div className="up-type-section">
+      <p className="up-type-label">Select Data Type</p>
+      <div className="up-type-buttons">
+        {DATA_TYPES.map((t) => (
+          <button
+            key={t.value}
+            className={`up-type-btn${dataType === t.value ? " active" : ""}`}
+            onClick={() => setDataType(t.value)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+    </div>
       {/* Drop Zone */}
       <div
         className={`up-dropzone${dragging ? " dragging" : ""}${file ? " has-file" : ""}`}

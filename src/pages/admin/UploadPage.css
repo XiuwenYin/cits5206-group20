@@ -112,3 +112,26 @@
   transition: background 0.14s;
 }
 .up-again-btn:hover { background: rgba(72,187,120,0.08); }
+
+/* Data Type */
+.up-type-section { margin-bottom: 1.2rem; }
+.up-type-label {
+  font-size: 0.72rem; font-weight: 600;
+  color: #5a9ab8; letter-spacing: 0.07em;
+  text-transform: uppercase; margin-bottom: 0.6rem;
+}
+.up-type-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.up-type-btn {
+  padding: 0.5rem 1.1rem;
+  background: rgba(8,18,32,0.8);
+  border: 1px solid rgba(27,152,224,0.2);
+  border-radius: 8px; color: #5a8fa8;
+  font-size: 0.85rem; font-weight: 500; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.up-type-btn:hover { border-color: rgba(27,152,224,0.5); color: #a8d4e8; }
+.up-type-btn.active {
+  background: rgba(27,152,224,0.14);
+  border-color: #1B98E0; color: #1B98E0;
+}
