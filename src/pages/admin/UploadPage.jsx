@@ -5,6 +5,12 @@ import "./UploadPage.css";
 
 const ACCEPTED = [".json", ".csv"];
 
+const DATA_TYPES = [
+  { value: "bolts", label: "Bolt Products" },
+  { value: "tests", label: "Test Data" },
+  { value: "curves", label: "Curve Data" },
+];
+
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -46,7 +52,11 @@ export default function UploadPage() {
     setStatus("uploading");
     setError("");
     try {
+<<<<<<< Updated upstream
       const res = await apiUploadFile(file, token);
+=======
+      const res = await apiUploadFile(file, dataType, token);
+>>>>>>> Stashed changes
       setResult(res);
       setStatus("success");
     } catch (err) {

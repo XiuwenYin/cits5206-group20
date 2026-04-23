@@ -36,6 +36,10 @@ export async function apiLogin(username, password) {
   }
 
   const data = await response.json();
+
+  localStorage.setItem("access", data.access);
+  localStorage.setItem("refresh", data.refresh);
+
   return {
     token: data.access,
     refresh: data.refresh,
