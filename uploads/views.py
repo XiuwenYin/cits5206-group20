@@ -3,6 +3,8 @@ import csv
 from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAdminUser
 
 from bolts.models import (
     Bolt, Test, StaticTest, DynamicTest,
@@ -12,34 +14,81 @@ from bolts.models import (
 
 
 class FileUploadView(APIView):
+    permission_classes = [IsAdminUser]
 
     def post(self, request):
         products_file = request.FILES.get("products")
         tests_file = request.FILES.get("tests")
-        test_id = request.data.get("test_id")
         curves_file = request.FILES.get("curves")
+        test_id = request.data.get("test_id")
 
         if not products_file and not tests_file and not curves_file:
             return Response({"error": "No files provided"}, status=400)
 
-        if curves_file and test_id:
-            self.handle_curves(curves_file, test_id)
-            return Response({"message": "Curve uploaded successfully"})
+        response_data = {
+            "products_uploaded": False,
+            "tests_uploaded": False,
+            "curves_uploaded": False
+        }
 
         try:
-            products_data = json.load(products_file)
-            tests_data = json.load(tests_file)
-
             with transaction.atomic():
-                bolt_map = self.handle_products(products_data)
-                self.handle_tests(tests_data, bolt_map)
 
-            return Response({"message": "Success"})
+                #Bolts
+                bolt_map = {}
+                if products_file:
+                    try:
+                        products_data = json.load(products_file)
+                    except json.JSONDecodeError:
+                        return Response(
+                            {"error": "Invalid JSON in products file"},
+                            status=400
+                        )
+
+                    bolt_map = self.handle_products(products_data)
+                    response_data["products_uploaded"] = True
+
+                #Tests
+                if tests_file:
+                    try:
+                        tests_data = json.load(tests_file)
+                    except json.JSONDecodeError:
+                        return Response(
+                            {"error": "Invalid JSON in tests file"},
+                            status=400
+                        )
+
+                    # If products weren’t uploaded in this request,
+                    # build bolt_map from DB instead
+                    if not bolt_map:
+                        bolt_map = {
+                            (b.supplier, b.name): b
+                            for b in Bolt.objects.all()
+                        }
+
+                    self.handle_tests(tests_data, bolt_map)
+                    response_data["tests_uploaded"] = True
+
+                #Curves
+                if curves_file:
+                    if not test_id:
+                        return Response(
+                            {"error": "test_id is required for curve upload"},
+                            status=400
+                        )
+
+                    self.handle_curves(curves_file, test_id)
+                    response_data["curves_uploaded"] = True
+
+            return Response({
+                "message": "Upload successful",
+                **response_data
+            }, status=200)
 
         except Exception as e:
             return Response({"error": str(e)}, status=400)
 
-    # Bolts Upload
+    #Bolts Upload
     def handle_products(self, products):
         bolt_map = {}
 
@@ -70,7 +119,7 @@ class FileUploadView(APIView):
 
         return bolt_map
 
-    # Tests Upload
+    #Tests Upload
     def handle_tests(self, tests, bolt_map):
         for t in tests:
             key = (t["supplier"], t["product_name"])
@@ -104,14 +153,14 @@ class FileUploadView(APIView):
                 test_type=t.get("test_methodology"),
             )
 
-            # Static Test
+            #Static Test
             if t.get("test_methodology") == "static":
                 StaticTest.objects.create(
                     test=test,
                     loading_rate=t.get("loading_rate")
                 )
 
-            # Dynamic Test
+            #Dynamic Test
             elif t.get("test_methodology") == "dynamic":
                 DynamicTest.objects.create(
                     test=test,
@@ -119,7 +168,7 @@ class FileUploadView(APIView):
                     energy_absorption_kj=t.get("energy_absorption"),
                 )
 
-    # Utility Functions
+    #Utility Functions
     def clean_diameter(self, value):
         return float(str(value).replace("mm", ""))
 
@@ -130,7 +179,7 @@ class FileUploadView(APIView):
             raise Exception(f"Test with id {test_id} not found")
 
 
-        # Remove existing curve data (prevents duplicates)
+        #Remove existing curve data (prevents duplicates)
         CurveData.objects.filter(test=test).delete()
 
         decoded = file.read().decode("utf-8").splitlines()
@@ -145,7 +194,7 @@ class FileUploadView(APIView):
                 displacement = float(row["Deformation (mm)"])
                 load_tonnes = float(row["Load (tonnes)"])
 
-                # Convert tonnes → kN
+                #Convert tonnes -> kN
                 load_kn = load_tonnes * 9.81
 
                 curve_objects.append(
@@ -157,10 +206,10 @@ class FileUploadView(APIView):
                 )
 
             except Exception as e:
-                # Skip bad rows instead of crashing
+                #Skip bad rows instead of crashing
                 print(f"Skipping row: {row} | Error: {e}")
 
-        # Bulk insert for performance
+        #Bulk insert for performance
         CurveData.objects.bulk_create(curve_objects)
 
     def get(self, request):
