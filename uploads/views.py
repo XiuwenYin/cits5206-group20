@@ -5,6 +5,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from .models import PendingUpload
 
 from bolts.models import (
     Bolt, Test, StaticTest, DynamicTest,
@@ -12,79 +17,56 @@ from bolts.models import (
     TestFacility, InstallationMethod, EncapsulationMethod, CurveData
 )
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class FileUploadView(APIView):
-    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        products_file = request.FILES.get("products")
-        tests_file = request.FILES.get("tests")
-        curves_file = request.FILES.get("curves")
-        test_id = request.data.get("test_id")
+        file = request.FILES.get("file")
+        data_type = request.data.get("data_type")
 
-        if not products_file and not tests_file and not curves_file:
-            return Response({"error": "No files provided"}, status=400)
+        if not file:
+            return Response({"error": "No file provided"}, status=400)
 
-        response_data = {
-            "products_uploaded": False,
-            "tests_uploaded": False,
-            "curves_uploaded": False
-        }
+        if data_type not in ["bolts", "tests", "curves"]:
+            return Response({"error": "Invalid data_type"}, status=400)
 
         try:
-            with transaction.atomic():
+            filename = file.name
+            pending = None
 
-                #Bolts
-                bolt_map = {}
-                if products_file:
-                    try:
-                        products_data = json.load(products_file)
-                    except json.JSONDecodeError:
-                        return Response(
-                            {"error": "Invalid JSON in products file"},
-                            status=400
-                        )
+            if data_type in ["bolts", "tests"]:
+                data = json.load(file)
+                pending = PendingUpload.objects.create(
+                    filename=filename,
+                    data_type=data_type,
+                    file_content=data,
+                    records_parsed=len(data),
+                )
 
-                    bolt_map = self.handle_products(products_data)
-                    response_data["products_uploaded"] = True
-
-                #Tests
-                if tests_file:
-                    try:
-                        tests_data = json.load(tests_file)
-                    except json.JSONDecodeError:
-                        return Response(
-                            {"error": "Invalid JSON in tests file"},
-                            status=400
-                        )
-
-                    # If products weren’t uploaded in this request,
-                    # build bolt_map from DB instead
-                    if not bolt_map:
-                        bolt_map = {
-                            (b.supplier, b.name): b
-                            for b in Bolt.objects.all()
-                        }
-
-                    self.handle_tests(tests_data, bolt_map)
-                    response_data["tests_uploaded"] = True
-
-                #Curves
-                if curves_file:
-                    if not test_id:
-                        return Response(
-                            {"error": "test_id is required for curve upload"},
-                            status=400
-                        )
-
-                    self.handle_curves(curves_file, test_id)
-                    response_data["curves_uploaded"] = True
+            elif data_type == "curves":
+                test_id = request.data.get("test_id")
+                if not test_id:
+                    return Response({"error": "test_id is required for curve upload"}, status=400)
+                csv_text = file.read().decode("utf-8")
+                record_count = len(csv_text.strip().splitlines()) - 1  # subtract header
+                pending = PendingUpload.objects.create(
+                    filename=filename,
+                    data_type=data_type,
+                    csv_content=csv_text,
+                    test_id=test_id,
+                    records_parsed=max(record_count, 0),
+                )
 
             return Response({
-                "message": "Upload successful",
-                **response_data
+                "message": "Upload received and pending review",
+                "filename": pending.filename,
+                "records_parsed": pending.records_parsed,
             }, status=200)
 
+        except json.JSONDecodeError:
+            return Response({"error": "Invalid JSON file"}, status=400)
         except Exception as e:
             return Response({"error": str(e)}, status=400)
 
@@ -178,41 +160,112 @@ class FileUploadView(APIView):
         except Test.DoesNotExist:
             raise Exception(f"Test with id {test_id} not found")
 
-
-        #Remove existing curve data (prevents duplicates)
         CurveData.objects.filter(test=test).delete()
 
-        decoded = file.read().decode("utf-8").splitlines()
-        reader = csv.DictReader(decoded)
-        reader.fieldnames = [field.strip() for field in reader.fieldnames]
-        print("HEADERS:", reader.fieldnames)
-        curve_objects = []
+        # Handle both raw uploaded files (bytes) and StringIO (already decoded)
+        if hasattr(file, 'read'):
+            content = file.read()
+            if isinstance(content, bytes):
+                content = content.decode("utf-8")
+            lines = content.splitlines()
+        else:
+            lines = file.splitlines()
 
+        reader = csv.DictReader(lines)
+        reader.fieldnames = [field.strip() for field in reader.fieldnames]
+
+        curve_objects = []
         for row in reader:
             row = {k.strip(): v.strip() for k, v in row.items()}
             try:
                 displacement = float(row["Deformation (mm)"])
-                load_tonnes = float(row["Load (tonnes)"])
-
-                #Convert tonnes -> kN
-                load_kn = load_tonnes * 9.81
-
-                curve_objects.append(
-                    CurveData(
-                        test=test,
-                        displacement_mm=displacement,
-                        load_kn=load_kn
-                    )
-                )
-
+                load_kn = float(row["Load (tonnes)"]) * 9.81
+                curve_objects.append(CurveData(
+                    test=test,
+                    displacement_mm=displacement,
+                    load_kn=load_kn
+                ))
             except Exception as e:
-                #Skip bad rows instead of crashing
                 print(f"Skipping row: {row} | Error: {e}")
 
-        #Bulk insert for performance
         CurveData.objects.bulk_create(curve_objects)
 
     def get(self, request):
         return Response({
             "message": "Use POST with files: products, tests"
         })
+    
+class PendingUploadsListView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        uploads = PendingUpload.objects.filter(status="pending").order_by("-uploaded_at")
+        data = [
+            {
+                "id": u.id,
+                "filename": u.filename,
+                "data_type": u.data_type,
+                "records_parsed": u.records_parsed,
+                "uploaded_at": u.uploaded_at.isoformat(),
+            }
+            for u in uploads
+        ]
+        return Response(data, status=200)
+
+
+class ApproveUploadView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            pending = PendingUpload.objects.get(id=pk, status="pending")
+        except PendingUpload.DoesNotExist:
+            return Response({"error": "Pending upload not found"}, status=404)
+
+        try:
+            with transaction.atomic():
+                if pending.data_type == "bolts":
+                    self._commit_bolts(pending.file_content)
+
+                elif pending.data_type == "tests":
+                    bolt_map = {(b.supplier, b.name): b for b in Bolt.objects.all()}
+                    self._commit_tests(pending.file_content, bolt_map)
+
+                elif pending.data_type == "curves":
+                    import io
+                    uploader = FileUploadView()
+                    csv_file = io.StringIO(pending.csv_content)
+                    uploader.handle_curves(csv_file, pending.test_id)
+
+                pending.status = "approved"
+                pending.save()
+
+            return Response({"message": "Upload approved"}, status=200)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
+    def _commit_bolts(self, data):
+        uploader = FileUploadView()
+        uploader.handle_products(data)
+
+    def _commit_tests(self, data, bolt_map):
+        uploader = FileUploadView()
+        uploader.handle_tests(data, bolt_map)
+
+
+class RejectUploadView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            pending = PendingUpload.objects.get(id=pk, status="pending")
+        except PendingUpload.DoesNotExist:
+            return Response({"error": "Pending upload not found"}, status=404)
+
+        pending.status = "rejected"
+        pending.save()
+        return Response({"message": "Upload rejected"}, status=200)
