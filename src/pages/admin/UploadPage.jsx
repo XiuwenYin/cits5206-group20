@@ -23,9 +23,10 @@ export default function UploadPage() {
 
   const [file, setFile] = useState(null);
   const [dragging, setDragging] = useState(false);
-  const [status, setStatus] = useState(null); // null | "uploading" | "success" | "error"
+  const [status, setStatus] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [dataType, setDataType] = useState(null);
 
   function handleFile(f) {
     const ext = "." + f.name.split(".").pop().toLowerCase();
@@ -52,11 +53,7 @@ export default function UploadPage() {
     setStatus("uploading");
     setError("");
     try {
-<<<<<<< Updated upstream
-      const res = await apiUploadFile(file, token);
-=======
       const res = await apiUploadFile(file, dataType, token);
->>>>>>> Stashed changes
       setResult(res);
       setStatus("success");
     } catch (err) {
@@ -77,6 +74,22 @@ export default function UploadPage() {
       <div className="up-header">
         <h1>Upload Data</h1>
         <p>Upload rock bolt testing data in JSON or CSV format for admin review.</p>
+      </div>
+
+      {/* Data Type Selection */}
+      <div className="up-type-section">
+        <p className="up-type-label">Select Data Type</p>
+        <div className="up-type-buttons">
+          {DATA_TYPES.map((t) => (
+            <button
+              key={t.value}
+              className={`up-type-btn${dataType === t.value ? " active" : ""}`}
+              onClick={() => setDataType(t.value)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Drop Zone */}
