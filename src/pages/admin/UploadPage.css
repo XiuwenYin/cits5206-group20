@@ -135,3 +135,24 @@
   background: rgba(27,152,224,0.14);
   border-color: #1B98E0; color: #1B98E0;
 }
+
+/* Test selector */
+.up-test-select {
+  width: 100%; max-width: 420px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(27,152,224,0.18);
+  border-radius: 9px;
+  padding: 0.72rem 1rem;
+  font-size: 0.9rem; color: #ddeefa;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+}
+.up-test-select:focus {
+  border-color: #1B98E0;
+  background: rgba(27,152,224,0.06);
+}
+.up-test-select option {
+  background: #0a1423;
+  color: #ddeefa;
+}
