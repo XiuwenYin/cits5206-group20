@@ -1,7 +1,8 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { apiUploadFile } from "../../api/upload";
 import "./UploadPage.css";
+
 
 const ACCEPTED = [".json", ".csv"];
 
@@ -9,6 +10,12 @@ const DATA_TYPES = [
   { value: "bolts", label: "Bolt Products" },
   { value: "tests", label: "Test Data" },
   { value: "curves", label: "Curve Data" },
+];
+
+const MOCK_TESTS = [
+  { id: 1, label: "Test #001 — Static Pull (2024-03-01)" },
+  { id: 2, label: "Test #002 — Dynamic Impact (2024-03-15)" },
+  { id: 3, label: "Test #003 — Static Pull (2024-04-02)" },
 ];
 
 function formatSize(bytes) {
@@ -27,6 +34,11 @@ export default function UploadPage() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [dataType, setDataType] = useState(null);
+  const [testId, setTestId] = useState("");
+
+  useEffect(() => {
+  if (dataType !== "curves") setTestId("");
+}, [dataType]);
 
   function handleFile(f) {
     const ext = "." + f.name.split(".").pop().toLowerCase();
@@ -53,7 +65,7 @@ export default function UploadPage() {
     setStatus("uploading");
     setError("");
     try {
-      const res = await apiUploadFile(file, dataType, token);
+      const res = await apiUploadFile(file, dataType, token, testId ? Number(testId) : null);
       setResult(res);
       setStatus("success");
     } catch (err) {
@@ -91,6 +103,22 @@ export default function UploadPage() {
           ))}
         </div>
       </div>
+
+      {dataType === "curves" && (
+        <div className="up-type-section">
+          <p className="up-type-label">Associate with Test</p>
+          <select
+            className="up-test-select"
+            value={testId}
+            onChange={(e) => setTestId(e.target.value)}
+          >
+            <option value="">— Select a test —</option>
+            {MOCK_TESTS.map((t) => (
+              <option key={t.id} value={t.id}>{t.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Drop Zone */}
       <div
