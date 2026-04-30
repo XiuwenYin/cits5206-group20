@@ -1,45 +1,10 @@
 import React from "react";
-
-const sampleProducts = [
-  {
-    id: 1,
-    supplier: "Supplier A",
-    product_name: "Resin Bolt A D20 mm x 2.4 m",
-    bolt_length: "2.4",
-    bolt_diameter: "20",
-    bolt_category: "Encapsulated",
-    equipment_compatibility: ["Handheld", "Mechanized Bolting Machine A", "Multi-OEM"],
-  },
-  {
-    id: 2,
-    supplier: "Supplier A",
-    product_name: "Hybrid Bolt D39 x 2.4 m",
-    bolt_length: "2.4",
-    bolt_diameter: "20",
-    bolt_category: "Hybrid",
-    equipment_compatibility: ["Handheld", "Mechanized Bolting Machine A", "Multi-OEM"],
-  },
-  {
-    id: 3,
-    supplier: "Hoek",
-    product_name: "Cement grouted 20mm diameter steel rebar",
-    bolt_length: "3",
-    bolt_diameter: "20",
-    bolt_category: "Encapsulated",
-    equipment_compatibility: ["Handheld", "Multi-OEM"],
-  },
-  {
-    id: 4,
-    supplier: "Hoek",
-    product_name: "EXL Swellex dowel",
-    bolt_length: "3",
-    bolt_diameter: "26",
-    bolt_category: "Encapsulated",
-    equipment_compatibility: ["Handheld", "Multi-OEM"],
-  },
-];
+import { sampleProducts } from "../frontend/sampleProducts";
 
 export default function ProductListingPage() {
+  // Count unique suppliers so this summary stays correct when the sample data grows.
+  const supplierCount = new Set(sampleProducts.map((product) => product.supplier)).size;
+
   return (
     <main style={styles.page}>
       <section style={styles.header}>
@@ -56,7 +21,7 @@ export default function ProductListingPage() {
           <span style={styles.summaryLabel}>Products loaded</span>
         </div>
         <div style={styles.summaryCard}>
-          <span style={styles.summaryNumber}>2</span>
+          <span style={styles.summaryNumber}>{supplierCount}</span>
           <span style={styles.summaryLabel}>Suppliers</span>
         </div>
         <div style={styles.summaryCard}>
