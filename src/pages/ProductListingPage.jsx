@@ -5,6 +5,11 @@ export default function ProductListingPage() {
   // Count unique suppliers so this summary stays correct when the sample data grows.
   const supplierCount = new Set(sampleProducts.map((product) => product.supplier)).size;
 
+  // Placeholder action for FR1. Later features can connect this to test details or charts.
+  const handleViewDetails = (product) => {
+    window.alert(`Selected product: ${product.product_name}`);
+  };
+
   return (
     <main style={styles.page}>
       <section style={styles.header}>
@@ -49,6 +54,7 @@ export default function ProductListingPage() {
                 <th style={styles.th}>Diameter</th>
                 <th style={styles.th}>Category</th>
                 <th style={styles.th}>Equipment Compatibility</th>
+                <th style={styles.th}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -63,6 +69,15 @@ export default function ProductListingPage() {
                   </td>
                   <td style={styles.td}>
                     {product.equipment_compatibility.join(", ")}
+                  </td>
+                  <td style={styles.td}>
+                    <button
+                      type="button"
+                      style={styles.actionButton}
+                      onClick={() => handleViewDetails(product)}
+                    >
+                      View details
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -184,5 +199,15 @@ const styles = {
     borderRadius: "999px",
     fontSize: "13px",
     fontWeight: 700,
+  },
+  actionButton: {
+    border: "1px solid #bfdbfe",
+    background: "#eff6ff",
+    color: "#1d4ed8",
+    borderRadius: "10px",
+    padding: "8px 12px",
+    fontWeight: 700,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
   },
 };
