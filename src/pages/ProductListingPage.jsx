@@ -1,83 +1,22 @@
 import React, { useMemo, useState } from "react";
 import { sampleProducts } from "../frontend/sampleProducts";
-
-const initialFilters = {
-  supplier: "",
-  length: "",
-  category: "",
-  equipment: "",
-  methodology: "",
-};
-
-// Temporary helper for sample data.
-// Supplier A sample data is dynamic, while Hoek sample data is static.
-// Later this should come directly from the backend test records.
-const getProductMethodologies = (product) => {
-  if (Array.isArray(product.test_methodologies)) {
-    return product.test_methodologies;
-  }
-
-  return product.supplier === "Hoek" ? ["static"] : ["dynamic"];
-};
-
-const formatMethodology = (methodology) => {
-  if (!methodology) return "";
-  return methodology.charAt(0).toUpperCase() + methodology.slice(1);
-};
-
-const getUniqueOptions = (items, getValue) => {
-  return Array.from(new Set(items.map(getValue).filter(Boolean))).sort();
-};
+import {
+  filterProducts,
+  formatMethodology,
+  getFilterOptions,
+  getProductMethodologies,
+  initialFilters,
+} from "../frontend/productFilters";
 
 export default function ProductListingPage() {
   const [filters, setFilters] = useState(initialFilters);
 
   const filterOptions = useMemo(() => {
-    const methodologies = sampleProducts.flatMap((product) =>
-      getProductMethodologies(product)
-    );
-
-    return {
-      suppliers: getUniqueOptions(sampleProducts, (product) => product.supplier),
-      lengths: getUniqueOptions(sampleProducts, (product) => product.bolt_length),
-      categories: getUniqueOptions(sampleProducts, (product) => product.bolt_category),
-      equipmentTypes: getUniqueOptions(
-        sampleProducts.flatMap((product) => product.equipment_compatibility),
-        (equipment) => equipment
-      ),
-      methodologies: Array.from(new Set(methodologies)).sort(),
-    };
+    return getFilterOptions(sampleProducts);
   }, []);
 
   const filteredProducts = useMemo(() => {
-    return sampleProducts.filter((product) => {
-      const productMethodologies = getProductMethodologies(product);
-
-      const matchesSupplier =
-        !filters.supplier || product.supplier === filters.supplier;
-
-      const matchesLength =
-        !filters.length || product.bolt_length === filters.length;
-
-      const matchesCategory =
-        !filters.category || product.bolt_category === filters.category;
-
-      const matchesEquipment =
-        !filters.equipment ||
-        product.equipment_compatibility.includes(filters.equipment);
-
-      const matchesMethodology =
-        !filters.methodology ||
-        productMethodologies.includes(filters.methodology);
-
-      return (
-        matchesSupplier &&
-        matchesLength &&
-        matchesCategory &&
-        matchesEquipment &&
-        matchesMethodology
-      );
-    });
+    return filterProducts(sampleProducts, filters);
   }, [filters]);
 
   // Count unique suppliers from the currently displayed products.
