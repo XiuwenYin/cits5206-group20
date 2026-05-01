@@ -1,23 +1,17 @@
 const API_BASE = "http://127.0.0.1:8000";
 
-export async function apiUploadFile(file, dataType, token) {
-  if (!token) {
-    throw new Error("No authentication token found. Please log in again.");
-  }
-
-  if (!dataType) {
-    throw new Error("Please select a data type before uploading.");
-  }
+export async function apiUploadFile(file, dataType, token, testId = null) {
+  if (!token) throw new Error("No authentication token found. Please log in again.");
+  if (!dataType) throw new Error("Please select a data type before uploading.");
 
   const formData = new FormData();
   formData.append("file", file);
   formData.append("data_type", dataType);
+  if (testId) formData.append("test_id", testId);
 
   const res = await fetch(`${API_BASE}/api/upload/`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
 

@@ -239,3 +239,22 @@ def test_curve_data(request, test_id):
     # Validate using serializer
     serializer = CurveDataListSerializer(response_data)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def test_list(request):
+    """
+    GET /api/bolts/tests/
+    Returns a list of all tests for the curve data upload selector.
+    """
+    from rest_framework_simplejwt.authentication import JWTAuthentication
+    from rest_framework.permissions import IsAuthenticated
+
+    tests = Test.objects.select_related("bolt").order_by("-id")
+    data = [
+        {
+            "id": t.id,
+            "label": f"{t.bolt.supplier} — {t.bolt.name} ({t.test_type})",
+        }
+        for t in tests
+    ]
+    return Response(data, status=status.HTTP_200_OK)
