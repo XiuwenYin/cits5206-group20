@@ -12,6 +12,12 @@ const DATA_TYPES = [
   { value: "curves", label: "Curve Data" },
 ];
 
+const MOCK_TESTS = [
+  { id: 1, label: "Test #001 — Static Pull (2024-03-01)" },
+  { id: 2, label: "Test #002 — Dynamic Impact (2024-03-15)" },
+  { id: 3, label: "Test #003 — Static Pull (2024-04-02)" },
+];
+
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -50,6 +56,7 @@ export default function UploadPage() {
       .catch(() => setError("Could not load tests. Please try again."))
       .finally(() => setTestsLoading(false));
   }, [dataType, token]);
+
 
   function handleFile(f) {
     const ext = "." + f.name.split(".").pop().toLowerCase();
