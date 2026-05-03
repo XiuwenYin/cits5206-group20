@@ -241,75 +241,21 @@ def test_curve_data(request, test_id):
     serializer = CurveDataListSerializer(response_data)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-@api_view(['POST'])
-@permission_classes([IsAdminUser])
-def approve_test(request, test_id):
-    """
-    POST /api/bolts/tests/<test_id>/approve/
-    Approves a test record, making it publicly visible.
-    Requires admin authentication via Bearer token.
-    """
-    try:
-        test = Test.objects.get(id=test_id)
-    except Test.DoesNotExist:
-        return Response(
-            {"error": f"Test with id {test_id} not found"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    test.is_approved = True
-    test.save()
-    return Response({
-        "message": f"Test {test_id} approved successfully",
-        "test_id": test_id,
-        "is_approved": True
-    })
-
-
-@api_view(['POST'])
-@permission_classes([IsAdminUser])
-def reject_test(request, test_id):
-    """
-    POST /api/bolts/tests/<test_id>/reject/
-    Rejects a test record, keeping it hidden from public view.
-    Requires admin authentication via Bearer token.
-    """
-    try:
-        test = Test.objects.get(id=test_id)
-    except Test.DoesNotExist:
-        return Response(
-            {"error": f"Test with id {test_id} not found"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    test.is_approved = False
-    test.save()
-    return Response({
-        "message": f"Test {test_id} rejected successfully",
-        "test_id": test_id,
-        "is_approved": False
-    })
-
-
 @api_view(['GET'])
-@permission_classes([IsAdminUser])
-def pending_tests(request):
+def test_list(request):
     """
-    GET /api/bolts/tests/pending/
-    Returns all test records that have not yet been approved.
-    Requires admin authentication via Bearer token.
+    GET /api/bolts/tests/
+    Returns a list of all tests for the curve data upload selector.
     """
-    tests = Test.objects.filter(is_approved=False).select_related('bolt')
+    from rest_framework_simplejwt.authentication import JWTAuthentication
+    from rest_framework.permissions import IsAuthenticated
+
+    tests = Test.objects.select_related("bolt").order_by("-id")
     data = [
         {
-            "test_id": t.id,
-            "bolt_name": t.bolt.name,
-            "supplier": t.bolt.supplier,
-            "methodology": t.test_type,
-            "uploaded_at": t.uploaded_at,
+            "id": t.id,
+            "label": f"{t.bolt.supplier} — {t.bolt.name} ({t.test_type})",
         }
         for t in tests
     ]
-    return Response({
-        "count": len(data),
-        "pending_tests": data
-    })
+    return Response(data, status=status.HTTP_200_OK)
