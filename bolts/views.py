@@ -4,13 +4,14 @@ API views for bolt products and test data.
 Provides endpoints for querying and filtering bolt inventory.
 """
 
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
 import numpy as np
 from .models import Bolt, Test, CurveData
 from .serializers import BoltSerializer, StatisticsSerializer, CurveDataListSerializer
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAdminUser
 
 
 @api_view(['GET'])
