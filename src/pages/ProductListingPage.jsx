@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import TestCurveChart from "../components/TestCurveChart";
-import { loadHoekCurves } from "../frontend/curveCsvParser";
+import React, { useMemo, useState } from "react";
+import { sampleProducts } from "../frontend/sampleProducts";
 import {
   filterProducts,
   formatMethodology,
@@ -8,42 +7,9 @@ import {
   getProductMethodologies,
   initialFilters,
 } from "../frontend/productFilters";
-import { sampleProducts } from "../frontend/sampleProducts";
 
 export default function ProductListingPage() {
   const [filters, setFilters] = useState(initialFilters);
-  const [curveTests, setCurveTests] = useState([]);
-  const [curveLoading, setCurveLoading] = useState(true);
-  const [curveError, setCurveError] = useState("");
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadCurveData = async () => {
-      try {
-        const loadedCurves = await loadHoekCurves();
-
-        if (isMounted) {
-          setCurveTests(loadedCurves);
-          setCurveError("");
-        }
-      } catch (error) {
-        if (isMounted) {
-          setCurveError(error.message);
-        }
-      } finally {
-        if (isMounted) {
-          setCurveLoading(false);
-        }
-      }
-    };
-
-    loadCurveData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const filterOptions = useMemo(() => {
     return getFilterOptions(sampleProducts);
@@ -52,14 +18,6 @@ export default function ProductListingPage() {
   const filteredProducts = useMemo(() => {
     return filterProducts(sampleProducts, filters);
   }, [filters]);
-
-  const filteredProductIds = useMemo(() => {
-    return new Set(filteredProducts.map((product) => product.id));
-  }, [filteredProducts]);
-
-  const visibleCurves = useMemo(() => {
-    return curveTests.filter((curve) => filteredProductIds.has(curve.productId));
-  }, [curveTests, filteredProductIds]);
 
   // Count unique suppliers from the currently displayed products.
   const supplierCount = new Set(filteredProducts.map((product) => product.supplier)).size;
@@ -104,8 +62,8 @@ export default function ProductListingPage() {
           <span style={styles.summaryLabel}>Suppliers shown</span>
         </div>
         <div style={styles.summaryCard}>
-          <span style={styles.summaryNumber}>{visibleCurves.length}</span>
-          <span style={styles.summaryLabel}>Curves shown</span>
+          <span style={styles.summaryNumber}>FR2</span>
+          <span style={styles.summaryLabel}>Filtering UI</span>
         </div>
       </section>
 
@@ -221,24 +179,12 @@ export default function ProductListingPage() {
         </div>
       </section>
 
-      {curveLoading ? (
-        <section style={styles.curveStatusCard}>
-          Loading client-provided curve CSV files...
-        </section>
-      ) : curveError ? (
-        <section style={styles.curveErrorCard}>
-          Could not load curve CSV files: {curveError}
-        </section>
-      ) : (
-        <TestCurveChart curves={visibleCurves} />
-      )}
-
       <section style={styles.card}>
         <div style={styles.cardHeader}>
           <h2 style={styles.cardTitle}>Available Products</h2>
           <p style={styles.cardNote}>
             Showing {filteredProducts.length} of {sampleProducts.length} client-sample products.
-            Hoek static curve data is loaded from client-provided CSV files.
+            Backend API integration will be connected once the endpoint is ready.
           </p>
         </div>
 
@@ -401,24 +347,6 @@ const styles = {
     borderRadius: "10px",
     padding: "10px 14px",
     fontWeight: 700,
-  },
-  curveStatusCard: {
-    background: "#ffffff",
-    border: "1px solid #dbe3ef",
-    borderRadius: "18px",
-    padding: "24px 28px",
-    marginBottom: "24px",
-    color: "#667085",
-    boxShadow: "0 14px 34px rgba(15, 23, 42, 0.08)",
-  },
-  curveErrorCard: {
-    background: "#fff1f2",
-    border: "1px solid #fecdd3",
-    borderRadius: "18px",
-    padding: "24px 28px",
-    marginBottom: "24px",
-    color: "#be123c",
-    boxShadow: "0 14px 34px rgba(15, 23, 42, 0.08)",
   },
   card: {
     background: "#ffffff",
