@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import TestCurveChart from "../components/TestCurveChart";
-import { loadHoekCurves } from "../frontend/curveCsvParser";
 import {
   filterProducts,
   formatMethodology,
@@ -8,80 +7,97 @@ import {
   getProductMethodologies,
   initialFilters,
 } from "../frontend/productFilters";
-import { sampleProducts } from "../frontend/sampleProducts";
+
+const API_BASE = "http://127.0.0.1:8000";
 
 export default function ProductListingPage() {
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState("");
+
+  const [curves, setCurves] = useState([]);
+  const [curvesLoading, setCurvesLoading] = useState(true);
+  const [curvesError, setCurvesError] = useState("");
+
   const [filters, setFilters] = useState(initialFilters);
-  const [curveTests, setCurveTests] = useState([]);
-  const [curveLoading, setCurveLoading] = useState(true);
-  const [curveError, setCurveError] = useState("");
 
+  // Fetch products from backend
   useEffect(() => {
-    let isMounted = true;
-
-    const loadCurveData = async () => {
-      try {
-        const loadedCurves = await loadHoekCurves();
-
-        if (isMounted) {
-          setCurveTests(loadedCurves);
-          setCurveError("");
-        }
-      } catch (error) {
-        if (isMounted) {
-          setCurveError(error.message);
-        }
-      } finally {
-        if (isMounted) {
-          setCurveLoading(false);
-        }
-      }
-    };
-
-    loadCurveData();
-
-    return () => {
-      isMounted = false;
-    };
+    fetch(`${API_BASE}/api/bolts/products/`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch products");
+        return res.json();
+      })
+      .then((data) => setProducts(data.results))
+      .catch((err) => setProductsError(err.message))
+      .finally(() => setProductsLoading(false));
   }, []);
 
-  const filterOptions = useMemo(() => {
-    return getFilterOptions(sampleProducts);
+  // Fetch all tests, then fetch curve data for each test
+  useEffect(() => {
+    fetch(`${API_BASE}/api/bolts/tests/`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch tests");
+        return res.json();
+      })
+      .then(async (tests) => {
+        if (!tests.length) {
+          setCurves([]);
+          return;
+        }
+
+        // Fetch curve data for every test in parallel
+        const results = await Promise.allSettled(
+          tests.map((test) =>
+            fetch(`${API_BASE}/api/bolts/tests/${test.id}/curve-data/`)
+              .then((res) => {
+                if (!res.ok) throw new Error(`No curve data for test ${test.id}`);
+                return res.json();
+              })
+              .then((data) => ({
+                // Map to the shape TestCurveChart expects
+                id: `test-${test.id}`,
+                productName: test.label,
+                xUnit: "mm",
+                yUnit: "kN",
+                points: data.displacement_mm.map((d, i) => ({
+                  deformation: d,
+                  load: data.load_kn[i],
+                })),
+              }))
+          )
+        );
+
+        // Only keep successfully loaded curves
+        const loaded = results
+          .filter((r) => r.status === "fulfilled")
+          .map((r) => r.value);
+
+        setCurves(loaded);
+      })
+      .catch((err) => setCurvesError(err.message))
+      .finally(() => setCurvesLoading(false));
   }, []);
 
-  const filteredProducts = useMemo(() => {
-    return filterProducts(sampleProducts, filters);
-  }, [filters]);
+  const filterOptions = useMemo(() => getFilterOptions(products), [products]);
 
-  const filteredProductIds = useMemo(() => {
-    return new Set(filteredProducts.map((product) => product.id));
-  }, [filteredProducts]);
+  const filteredProducts = useMemo(
+    () => filterProducts(products, filters),
+    [products, filters]
+  );
 
-  const visibleCurves = useMemo(() => {
-    return curveTests.filter((curve) => filteredProductIds.has(curve.productId));
-  }, [curveTests, filteredProductIds]);
-
-  // Count unique suppliers from the currently displayed products.
-  const supplierCount = new Set(filteredProducts.map((product) => product.supplier)).size;
-
-  const hasActiveFilters = Object.values(filters).some((value) => value !== "");
+  const supplierCount = new Set(filteredProducts.map((p) => p.supplier)).size;
+  const hasActiveFilters = Object.values(filters).some((v) => v !== "");
 
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
-
-    setFilters((currentFilters) => ({
-      ...currentFilters,
-      [name]: value,
-    }));
+    setFilters((current) => ({ ...current, [name]: value }));
   };
 
-  const handleClearFilters = () => {
-    setFilters(initialFilters);
-  };
+  const handleClearFilters = () => setFilters(initialFilters);
 
-  // Placeholder action for FR1. Later features can connect this to test details or charts.
   const handleViewDetails = (product) => {
-    window.alert(`Selected product: ${product.product_name}`);
+    window.alert(`Selected product: ${product.name}`);
   };
 
   return (
@@ -104,8 +120,8 @@ export default function ProductListingPage() {
           <span style={styles.summaryLabel}>Suppliers shown</span>
         </div>
         <div style={styles.summaryCard}>
-          <span style={styles.summaryNumber}>{visibleCurves.length}</span>
-          <span style={styles.summaryLabel}>Curves shown</span>
+          <span style={styles.summaryNumber}>{products.length}</span>
+          <span style={styles.summaryLabel}>Total products</span>
         </div>
       </section>
 
@@ -114,11 +130,10 @@ export default function ProductListingPage() {
           <div>
             <h2 style={styles.cardTitle}>Filter Products</h2>
             <p style={styles.cardNote}>
-              Filter the product list by supplier, length, category, equipment compatibility,
-              and test methodology.
+              Filter the product list by supplier, length, category, equipment
+              compatibility, and test methodology.
             </p>
           </div>
-
           <button
             type="button"
             style={{
@@ -136,167 +151,152 @@ export default function ProductListingPage() {
         <div style={styles.filterGrid}>
           <label style={styles.filterLabel}>
             <span style={styles.labelText}>Supplier</span>
-            <select
-              name="supplier"
-              value={filters.supplier}
-              onChange={handleFilterChange}
-              style={styles.select}
-            >
+            <select name="supplier" value={filters.supplier} onChange={handleFilterChange} style={styles.select}>
               <option value="">All suppliers</option>
-              {filterOptions.suppliers.map((supplier) => (
-                <option key={supplier} value={supplier}>
-                  {supplier}
-                </option>
+              {filterOptions.suppliers.map((s) => (
+                <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </label>
 
           <label style={styles.filterLabel}>
             <span style={styles.labelText}>Bolt length</span>
-            <select
-              name="length"
-              value={filters.length}
-              onChange={handleFilterChange}
-              style={styles.select}
-            >
+            <select name="length" value={filters.length} onChange={handleFilterChange} style={styles.select}>
               <option value="">All lengths</option>
-              {filterOptions.lengths.map((length) => (
-                <option key={length} value={length}>
-                  {length} m
-                </option>
+              {filterOptions.lengths.map((l) => (
+                <option key={l} value={l}>{l} m</option>
               ))}
             </select>
           </label>
 
           <label style={styles.filterLabel}>
             <span style={styles.labelText}>Category</span>
-            <select
-              name="category"
-              value={filters.category}
-              onChange={handleFilterChange}
-              style={styles.select}
-            >
+            <select name="category" value={filters.category} onChange={handleFilterChange} style={styles.select}>
               <option value="">All categories</option>
-              {filterOptions.categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
+              {filterOptions.categories.map((c) => (
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </label>
 
           <label style={styles.filterLabel}>
             <span style={styles.labelText}>Equipment</span>
-            <select
-              name="equipment"
-              value={filters.equipment}
-              onChange={handleFilterChange}
-              style={styles.select}
-            >
+            <select name="equipment" value={filters.equipment} onChange={handleFilterChange} style={styles.select}>
               <option value="">All equipment</option>
-              {filterOptions.equipmentTypes.map((equipment) => (
-                <option key={equipment} value={equipment}>
-                  {equipment}
-                </option>
+              {filterOptions.equipmentTypes.map((e) => (
+                <option key={e} value={e}>{e}</option>
               ))}
             </select>
           </label>
 
           <label style={styles.filterLabel}>
             <span style={styles.labelText}>Test methodology</span>
-            <select
-              name="methodology"
-              value={filters.methodology}
-              onChange={handleFilterChange}
-              style={styles.select}
-            >
+            <select name="methodology" value={filters.methodology} onChange={handleFilterChange} style={styles.select}>
               <option value="">All methodologies</option>
-              {filterOptions.methodologies.map((methodology) => (
-                <option key={methodology} value={methodology}>
-                  {formatMethodology(methodology)}
-                </option>
+              {filterOptions.methodologies.map((m) => (
+                <option key={m} value={m}>{formatMethodology(m)}</option>
               ))}
             </select>
           </label>
         </div>
       </section>
 
-      {curveLoading ? (
+      {/* Curve Chart */}
+      {curvesLoading ? (
         <section style={styles.curveStatusCard}>
-          Loading client-provided curve CSV files...
+          Loading curve data...
         </section>
-      ) : curveError ? (
+      ) : curvesError ? (
         <section style={styles.curveErrorCard}>
-          Could not load curve CSV files: {curveError}
+          Could not load curve data: {curvesError}
         </section>
       ) : (
-        <TestCurveChart curves={visibleCurves} />
+        <TestCurveChart curves={curves} />
       )}
 
       <section style={styles.card}>
         <div style={styles.cardHeader}>
           <h2 style={styles.cardTitle}>Available Products</h2>
           <p style={styles.cardNote}>
-            Showing {filteredProducts.length} of {sampleProducts.length} client-sample products.
-            Hoek static curve data is loaded from client-provided CSV files.
+            {productsLoading
+              ? "Loading products..."
+              : productsError
+              ? `Error: ${productsError}`
+              : `Showing ${filteredProducts.length} of ${products.length} products.`}
           </p>
         </div>
 
-        <div style={styles.tableWrapper}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Product</th>
-                <th style={styles.th}>Supplier</th>
-                <th style={styles.th}>Length</th>
-                <th style={styles.th}>Diameter</th>
-                <th style={styles.th}>Category</th>
-                <th style={styles.th}>Equipment Compatibility</th>
-                <th style={styles.th}>Methodology</th>
-                <th style={styles.th}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
-                  <tr key={product.id}>
-                    <td style={styles.tdStrong}>{product.product_name}</td>
-                    <td style={styles.td}>{product.supplier}</td>
-                    <td style={styles.td}>{product.bolt_length} m</td>
-                    <td style={styles.td}>{product.bolt_diameter} mm</td>
-                    <td style={styles.td}>
-                      <span style={styles.badge}>{product.bolt_category}</span>
-                    </td>
-                    <td style={styles.td}>
-                      {product.equipment_compatibility.join(", ")}
-                    </td>
-                    <td style={styles.td}>
-                      {getProductMethodologies(product)
-                        .map(formatMethodology)
-                        .join(", ")}
-                    </td>
-                    <td style={styles.td}>
-                      <button
-                        type="button"
-                        style={styles.actionButton}
-                        onClick={() => handleViewDetails(product)}
-                      >
-                        View details
-                      </button>
+        {productsLoading && (
+          <div style={styles.centred}>
+            <p style={styles.mutedText}>Loading products...</p>
+          </div>
+        )}
+
+        {!productsLoading && productsError && (
+          <div style={styles.centred}>
+            <p style={styles.errorText}>Error: {productsError}</p>
+          </div>
+        )}
+
+        {!productsLoading && !productsError && (
+          <div style={styles.tableWrapper}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Product</th>
+                  <th style={styles.th}>Supplier</th>
+                  <th style={styles.th}>Length</th>
+                  <th style={styles.th}>Diameter</th>
+                  <th style={styles.th}>Category</th>
+                  <th style={styles.th}>Equipment Compatibility</th>
+                  <th style={styles.th}>Methodology</th>
+                  <th style={styles.th}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((product) => (
+                    <tr key={product.id}>
+                      <td style={styles.tdStrong}>{product.name}</td>
+                      <td style={styles.td}>{product.supplier}</td>
+                      <td style={styles.td}>{product.length_m} m</td>
+                      <td style={styles.td}>{product.diameter_mm} mm</td>
+                      <td style={styles.td}>
+                        <span style={styles.badge}>
+                          {product.category?.categoryName || "—"}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        {product.equipment?.map((e) => e.equipment_type_name).join(", ") || "—"}
+                      </td>
+                      <td style={styles.td}>
+                        {getProductMethodologies(product)
+                          .map(formatMethodology)
+                          .join(", ") || "—"}
+                      </td>
+                      <td style={styles.td}>
+                        <button
+                          type="button"
+                          style={styles.actionButton}
+                          onClick={() => handleViewDetails(product)}
+                        >
+                          View details
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td style={styles.emptyState} colSpan="8">
+                      No products match the selected filters. Clear filters or try a
+                      different combination.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td style={styles.emptyState} colSpan="8">
-                    No products match the selected filters. Clear filters or try a different
-                    combination.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </main>
   );
@@ -439,6 +439,18 @@ const styles = {
     margin: 0,
     color: "#667085",
     fontSize: "14px",
+  },
+  centred: {
+    padding: "48px",
+    textAlign: "center",
+  },
+  mutedText: {
+    color: "#667085",
+    fontSize: "15px",
+  },
+  errorText: {
+    color: "#e53e3e",
+    fontSize: "15px",
   },
   tableWrapper: {
     overflowX: "auto",

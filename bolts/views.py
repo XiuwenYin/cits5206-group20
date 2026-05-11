@@ -244,6 +244,7 @@ def test_curve_data(request, test_id):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def test_list(request):
     """
     GET /api/bolts/tests/

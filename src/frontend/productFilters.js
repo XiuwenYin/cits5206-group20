@@ -6,15 +6,11 @@ export const initialFilters = {
   methodology: "",
 };
 
-// Temporary helper for sample data.
-// Supplier A sample data is dynamic, while Hoek sample data is static.
-// Later this should come directly from the backend test records.
 export const getProductMethodologies = (product) => {
   if (Array.isArray(product.test_methodologies)) {
     return product.test_methodologies;
   }
-
-  return product.supplier === "Hoek" ? ["static"] : ["dynamic"];
+  return [];
 };
 
 export const formatMethodology = (methodology) => {
@@ -32,12 +28,12 @@ export const getFilterOptions = (products) => {
   );
 
   return {
-    suppliers: getUniqueOptions(products, (product) => product.supplier),
-    lengths: getUniqueOptions(products, (product) => product.bolt_length),
-    categories: getUniqueOptions(products, (product) => product.bolt_category),
+    suppliers: getUniqueOptions(products, (p) => p.supplier),
+    lengths: getUniqueOptions(products, (p) => p.length_m),
+    categories: getUniqueOptions(products, (p) => p.category?.categoryName),
     equipmentTypes: getUniqueOptions(
-      products.flatMap((product) => product.equipment_compatibility),
-      (equipment) => equipment
+      products.flatMap((p) => p.equipment ?? []),
+      (e) => e.equipment_type_name
     ),
     methodologies: Array.from(new Set(methodologies)).sort(),
   };
@@ -51,14 +47,16 @@ export const filterProducts = (products, filters) => {
       !filters.supplier || product.supplier === filters.supplier;
 
     const matchesLength =
-      !filters.length || product.bolt_length === filters.length;
+      !filters.length || String(product.length_m) === String(filters.length);
 
     const matchesCategory =
-      !filters.category || product.bolt_category === filters.category;
+      !filters.category || product.category?.categoryName === filters.category;
 
     const matchesEquipment =
       !filters.equipment ||
-      product.equipment_compatibility.includes(filters.equipment);
+      (product.equipment ?? []).some(
+        (e) => e.equipment_type_name === filters.equipment
+      );
 
     const matchesMethodology =
       !filters.methodology ||
