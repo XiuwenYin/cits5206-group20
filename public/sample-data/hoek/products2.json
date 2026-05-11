@@ -1,0 +1,68 @@
+[
+    {
+        "supplier": "Hoek",
+        "product_name": "Expansion shell anchored 17mm diameter steel rockbolt",
+        "bolt_length": "3",
+        "bolt_diameter": "17.28",
+        "bolt_category": "Encapsulated",
+        "equipment_compatibility": [
+            "Handheld",
+            "Multi-OEM"
+        ]
+    },
+    {
+        "supplier": "Hoek",
+        "product_name": "Cement grouted 20mm diameter steel rebar",
+        "bolt_length": "3",
+        "bolt_diameter": "20",
+        "bolt_category": "Encapsulated",
+        "equipment_compatibility": [
+            "Handheld",
+            "Multi-OEM"
+        ]
+    },
+    {
+        "supplier": "Hoek",
+        "product_name": "Resin grouted 20mm diameter steel rebar",
+        "bolt_length": "3",
+        "bolt_diameter": "20",
+        "bolt_category": "Encapsulated",
+        "equipment_compatibility": [
+            "Handheld",
+            "Multi-OEM"
+        ]
+    },
+    {
+        "supplier": "Hoek",
+        "product_name": "Resin grouted 22mm fibreglass rod",
+        "bolt_length": "3",
+        "bolt_diameter": "22",
+        "bolt_category": "Encapsulated",
+        "equipment_compatibility": [
+            "Handheld",
+            "Multi-OEM"
+        ]
+    },
+    {
+        "supplier": "Hoek",
+        "product_name": "Type SS 39 Split Set stabiliser",
+        "bolt_length": "3",
+        "bolt_diameter": "39mm",
+        "bolt_category": "Encapsulated",
+        "equipment_compatibility": [
+            "Handheld",
+            "Multi-OEM"
+        ]
+    },
+    {
+        "supplier": "Hoek",
+        "product_name": "EXL Swellex dowel",
+        "bolt_length": "3",
+        "bolt_diameter": "26",
+        "bolt_category": "Encapsulated",
+        "equipment_compatibility": [
+            "Handheld",
+            "Multi-OEM"
+        ]
+    }
+]
