@@ -35,28 +35,10 @@ export default function UploadPage() {
   const [error, setError] = useState("");
   const [dataType, setDataType] = useState(null);
   const [testId, setTestId] = useState("");
-  const [tests, setTests] = useState([]);
-  const [testsLoading, setTestsLoading] = useState(false);
 
   useEffect(() => {
-    if (dataType !== "curves") {
-      setTestId("");
-      setTests([]);
-      return;
-    }
-    setTestsLoading(true);
-    fetch("http://127.0.0.1:8000/api/bolts/tests/", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load tests");
-        return res.json();
-      })
-      .then((data) => setTests(data))
-      .catch(() => setError("Could not load tests. Please try again."))
-      .finally(() => setTestsLoading(false));
-  }, [dataType, token]);
-
+  if (dataType !== "curves") setTestId("");
+}, [dataType]);
 
   function handleFile(f) {
     const ext = "." + f.name.split(".").pop().toLowerCase();
@@ -80,10 +62,6 @@ export default function UploadPage() {
 
   async function handleUpload() {
     if (!file) return;
-    if (dataType === "curves" && !testId) {
-      setError("Please select a test to associate with this curve data.");
-      return;
-    }
     setStatus("uploading");
     setError("");
     try {
@@ -126,24 +104,19 @@ export default function UploadPage() {
         </div>
       </div>
 
-      {/* Test Selector — only shown for curves */}
       {dataType === "curves" && (
         <div className="up-type-section">
           <p className="up-type-label">Associate with Test</p>
-          {testsLoading ? (
-            <span className="up-spinner" />
-          ) : (
-            <select
-              className="up-test-select"
-              value={testId}
-              onChange={(e) => setTestId(e.target.value)}
-            >
-              <option value="">— Select a test —</option>
-              {tests.map((t) => (
-                <option key={t.id} value={t.id}>{t.label}</option>
-              ))}
-            </select>
-          )}
+          <select
+            className="up-test-select"
+            value={testId}
+            onChange={(e) => setTestId(e.target.value)}
+          >
+            <option value="">— Select a test —</option>
+            {MOCK_TESTS.map((t) => (
+              <option key={t.id} value={t.id}>{t.label}</option>
+            ))}
+          </select>
         </div>
       )}
 

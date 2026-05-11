@@ -6,7 +6,6 @@ Provides routes for querying and filtering bolt inventory.
 
 from django.urls import path
 from . import views
-from .views import test_list
 
 urlpatterns = [
     # GET /api/bolts/products/ - list and filter bolt products
@@ -18,6 +17,4 @@ urlpatterns = [
     
     # GET /api/tests/<test_id>/statistics/ - compute statistics for a test's curve data
     path('tests/<int:test_id>/statistics/', views.test_statistics, name='test_statistics'),
-
-    path("tests/", test_list),
 ]
