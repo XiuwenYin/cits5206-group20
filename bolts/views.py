@@ -11,10 +11,12 @@ import numpy as np
 from .models import Bolt, Test, CurveData
 from .serializers import BoltSerializer, StatisticsSerializer, CurveDataListSerializer
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import AllowAny
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
+
 def bolt_list_filter(request):
     """
     GET /api/bolts/products/
@@ -242,6 +244,7 @@ def test_curve_data(request, test_id):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def test_list(request):
     """
     GET /api/bolts/tests/

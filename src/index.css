@@ -9,3 +9,7 @@ body {
   color: #e0edf5;
   -webkit-font-smoothing: antialiased;
 }
+
+#root {
+  min-height: 100vh;
+}
