@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import TestCurveChart from "../components/TestCurveChart";
+import ProductDetailModal from "../components/ProductDetailModal";
 import {
   filterProducts,
   formatMethodology,
@@ -20,6 +21,7 @@ export default function ProductListingPage() {
   const [curvesError, setCurvesError] = useState("");
 
   const [filters, setFilters] = useState(initialFilters);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   // Fetch products from backend
   useEffect(() => {
@@ -97,11 +99,18 @@ export default function ProductListingPage() {
   const handleClearFilters = () => setFilters(initialFilters);
 
   const handleViewDetails = (product) => {
-    window.alert(`Selected product: ${product.name}`);
+    setSelectedProduct(product);
   };
 
   return (
     <main style={styles.page}>
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          curves={curves}
+          onClose={() => setSelectedProduct(null)}
+        />
+      )}
       <section style={styles.header}>
         <p style={styles.eyebrow}>Public Database</p>
         <h1 style={styles.title}>Rock Bolt Products</h1>
