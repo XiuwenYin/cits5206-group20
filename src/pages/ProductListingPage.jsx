@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import TestCurveChart from "../components/TestCurveChart";
 import ProductDetailModal from "../components/ProductDetailModal";
+import FilterSummaryStats from "../components/FilterSummaryStats";
 import {
   filterProducts,
   formatMethodology,
@@ -209,6 +210,9 @@ export default function ProductListingPage() {
           </label>
         </div>
       </section>
+
+      {/* Summary Statistics */}
+      <FilterSummaryStats filters={filters} />
 
       {/* Curve Chart */}
       {curvesLoading ? (

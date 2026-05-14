@@ -265,6 +265,85 @@ def test_list(request):
 
 
 @api_view(['GET'])
+def test_summary(request):
+    """
+    GET /api/bolts/tests/summary/
+    Returns aggregated statistics for tests belonging to filtered products.
+    Accepts the same filter params as /api/bolts/products/:
+      supplier, length, category, methodology
+    """
+    # Apply the same product filters
+    queryset = Bolt.objects.all()
+
+    supplier = request.query_params.get('supplier', None)
+    if supplier:
+        queryset = queryset.filter(supplier__icontains=supplier)
+
+    length = request.query_params.get('length', None)
+    if length:
+        try:
+            queryset = queryset.filter(length_m=float(length))
+        except ValueError:
+            pass
+
+    category = request.query_params.get('category', None)
+    if category:
+        q = Q(category__categoryName__icontains=category)
+        try:
+            q |= Q(category__id=int(category))
+        except ValueError:
+            pass
+        queryset = queryset.filter(q)
+
+    methodology = request.query_params.get('methodology', None)
+    if methodology and methodology.lower() in ['static', 'dynamic']:
+        queryset = queryset.filter(tests__test_type=methodology.lower()).distinct()
+
+    # Get all tests for the filtered products
+    tests = Test.objects.filter(bolt__in=queryset)
+
+    total_tests = tests.count()
+    if total_tests == 0:
+        return Response({'total_tests': 0, 'parameters': []}, status=status.HTTP_200_OK)
+
+    def compute_stats(values):
+        clean = [float(v) for v in values if v is not None]
+        if not clean:
+            return None
+        arr = np.array(clean)
+        return {
+            'count': len(clean),
+            'mean':   round(float(np.mean(arr)), 3),
+            'median': round(float(np.median(arr)), 3),
+            'min':    round(float(np.min(arr)), 3),
+            'max':    round(float(np.max(arr)), 3),
+        }
+
+    parameters = []
+
+    peak = compute_stats(tests.values_list('peak_strength', flat=True))
+    if peak:
+        parameters.append({'label': 'Peak Strength', 'unit': 'kN', **peak})
+
+    bond = compute_stats(tests.values_list('bond_strength', flat=True))
+    if bond:
+        parameters.append({'label': 'Bond Strength', 'unit': 'kN/m', **bond})
+
+    deform = compute_stats(tests.values_list('ultimate_deformation', flat=True))
+    if deform:
+        parameters.append({'label': 'Ultimate Deformation', 'unit': 'mm', **deform})
+
+    stiffness = compute_stats(tests.values_list('stiffness', flat=True))
+    if stiffness:
+        parameters.append({'label': 'Stiffness', 'unit': 'kN/mm', **stiffness})
+
+    return Response({
+        'total_tests': total_tests,
+        'parameters': parameters,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
 def dashboard_stats(request):
     """
     GET /api/bolts/stats/
