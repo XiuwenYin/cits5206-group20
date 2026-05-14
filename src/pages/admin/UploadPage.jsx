@@ -45,15 +45,14 @@ export default function UploadPage() {
       return;
     }
     setTestsLoading(true);
-    fetch("http://127.0.0.1:8000/api/bolts/tests/", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    // Public endpoint — no auth header needed (avoids 401 on expired tokens)
+    fetch("http://127.0.0.1:8000/api/bolts/tests/")
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to load tests");
+        if (!res.ok) throw new Error(`Failed to load tests (${res.status})`);
         return res.json();
       })
-      .then((data) => setTests(data))
-      .catch(() => setError("Could not load tests. Please try again."))
+      .then((data) => setTests(Array.isArray(data) ? data : []))
+      .catch((err) => setError(`Could not load tests: ${err.message}. Please refresh.`))
       .finally(() => setTestsLoading(false));
   }, [dataType, token]);
 
