@@ -23,10 +23,19 @@ class BoltCategorySerializer(serializers.ModelSerializer):
 class BoltSerializer(serializers.ModelSerializer):
     """
     Serializer for Bolt model.
-    Includes nested category and equipment information.
+    Includes nested category, equipment, and test methodology information.
     """
     category = BoltCategorySerializer(read_only=True)
     equipment = EquipmentTypeSerializer(many=True, read_only=True)
+    test_methodologies = serializers.SerializerMethodField()
+
+    def get_test_methodologies(self, obj):
+        return list(
+            obj.tests.exclude(test_type__isnull=True)
+                     .exclude(test_type='')
+                     .values_list('test_type', flat=True)
+                     .distinct()
+        )
 
     class Meta:
         model = Bolt
@@ -37,7 +46,8 @@ class BoltSerializer(serializers.ModelSerializer):
             'length_m',
             'diameter_mm',
             'category',
-            'equipment'
+            'equipment',
+            'test_methodologies',
         ]
 
 

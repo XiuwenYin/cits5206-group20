@@ -262,3 +262,33 @@ def test_list(request):
         for t in tests
     ]
     return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def dashboard_stats(request):
+    """
+    GET /api/bolts/stats/
+    Returns summary counts for the admin dashboard.
+    Requires authentication.
+    """
+    from rest_framework_simplejwt.authentication import JWTAuthentication
+    from rest_framework.permissions import IsAuthenticated
+    from uploads.models import PendingUpload
+
+    auth = JWTAuthentication()
+    try:
+        result = auth.authenticate(request)
+        if result is None:
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+    except Exception:
+        return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    total_products = Bolt.objects.count()
+    pending_uploads = PendingUpload.objects.filter(status='pending').count()
+    approved_uploads = PendingUpload.objects.filter(status='approved').count()
+
+    return Response({
+        'total_products': total_products,
+        'pending_uploads': pending_uploads,
+        'approved_uploads': approved_uploads,
+    }, status=status.HTTP_200_OK)
