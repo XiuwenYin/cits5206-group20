@@ -10,7 +10,7 @@ from django.db.models import Q
 import numpy as np
 from .models import Bolt, Test, CurveData
 from .serializers import BoltSerializer, StatisticsSerializer, CurveDataListSerializer
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
 
 
@@ -244,15 +244,14 @@ def test_curve_data(request, test_id):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@authentication_classes([])          # skip JWT auth entirely — token may be expired
 @permission_classes([AllowAny])
 def test_list(request):
     """
     GET /api/bolts/tests/
     Returns a list of all tests for the curve data upload selector.
+    Public endpoint — no authentication required.
     """
-    from rest_framework_simplejwt.authentication import JWTAuthentication
-    from rest_framework.permissions import IsAuthenticated
-
     tests = Test.objects.select_related("bolt").order_by("-id")
     data = [
         {
