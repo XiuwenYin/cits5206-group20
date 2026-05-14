@@ -25,7 +25,7 @@ function formatSize(bytes) {
 }
 
 export default function UploadPage() {
-  const { token } = useAuth();
+  const { token, refreshAccessToken } = useAuth();
   const inputRef = useRef(null);
 
   const [file, setFile] = useState(null);
@@ -86,7 +86,7 @@ export default function UploadPage() {
     setStatus("uploading");
     setError("");
     try {
-      const res = await apiUploadFile(file, dataType, token, testId ? Number(testId) : null);
+      const res = await apiUploadFile(file, dataType, token, testId ? Number(testId) : null, refreshAccessToken);
       setResult(res);
       setStatus("success");
     } catch (err) {
