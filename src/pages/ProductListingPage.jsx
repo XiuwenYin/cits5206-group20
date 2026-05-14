@@ -89,6 +89,16 @@ export default function ProductListingPage() {
   const supplierCount = new Set(filteredProducts.map((p) => p.supplier)).size;
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
 
+  // Only show curves that belong to a product in the current filtered list
+  const filteredCurves = useMemo(() => {
+    if (!hasActiveFilters) return curves;
+    return curves.filter((curve) =>
+      filteredProducts.some((p) =>
+        curve.productName.startsWith(`${p.supplier} — ${p.name}`)
+      )
+    );
+  }, [curves, filteredProducts, hasActiveFilters]);
+
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
     setFilters((current) => ({ ...current, [name]: value }));
@@ -211,7 +221,7 @@ export default function ProductListingPage() {
           Could not load curve data: {curvesError}
         </section>
       ) : (
-        <TestCurveChart curves={curves} />
+        <TestCurveChart curves={filteredCurves} />
       )}
 
       <section style={styles.card}>
