@@ -47,7 +47,7 @@ Authenticate with admin credentials and receive a JWT token pair.
 }
 ```
 
-The `access` token expires after 60 minutes. The `refresh` token expires after 1 day.
+The `access` token expires after 8 hours. The `refresh` token expires after 7 days.
 
 ---
 

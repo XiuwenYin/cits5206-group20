@@ -23,4 +23,7 @@ urlpatterns = [
 
     # GET /api/bolts/stats/ - admin dashboard summary counts
     path('stats/', views.dashboard_stats, name='dashboard_stats'),
+
+    # GET /api/bolts/tests/summary/ - aggregated stats for filtered products
+    path('tests/summary/', views.test_summary, name='test_summary'),
 ]
