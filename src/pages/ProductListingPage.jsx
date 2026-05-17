@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import TestCurveChart from "../components/TestCurveChart";
 import ProductDetailModal from "../components/ProductDetailModal";
+import FilterSummaryStats from "../components/FilterSummaryStats";
 import {
   filterProducts,
   formatMethodology,
@@ -90,6 +91,16 @@ export default function ProductListingPage() {
 
   const supplierCount = new Set(filteredProducts.map((p) => p.supplier)).size;
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
+
+  // Only show curves that belong to a product in the current filtered list
+  const filteredCurves = useMemo(() => {
+    if (!hasActiveFilters) return curves;
+    return curves.filter((curve) =>
+      filteredProducts.some((p) =>
+        curve.productName.startsWith(`${p.supplier} — ${p.name}`)
+      )
+    );
+  }, [curves, filteredProducts, hasActiveFilters]);
 
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
@@ -210,6 +221,9 @@ export default function ProductListingPage() {
         </div>
       </section>
 
+      {/* Summary Statistics */}
+      <FilterSummaryStats filters={filters} />
+
       {/* Curve Chart */}
       {curvesLoading ? (
         <section style={styles.curveStatusCard}>
@@ -220,7 +234,7 @@ export default function ProductListingPage() {
           Could not load curve data: {curvesError}
         </section>
       ) : (
-        <TestCurveChart curves={curves} />
+        <TestCurveChart curves={filteredCurves} />
       )}
 
       <section style={styles.card}>

@@ -114,8 +114,7 @@ export default function TestCurveChart({ curves }) {
         <div>
           <h2 style={styles.title}>Test Curve Visualisation</h2>
           <p style={styles.note}>
-            Showing {curves.length} client-provided Hoek static test curves with an
-            average curve overlay.
+            Showing {curves.length} test curve{curves.length !== 1 ? "s" : ""} with an average curve overlay.
           </p>
         </div>
 
