@@ -10,5 +10,13 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
-  }
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom', 'react-router-dom', 'react-router'],
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/tests/setup.js',
+  },
 })
